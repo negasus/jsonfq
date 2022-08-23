@@ -7,7 +7,7 @@ import (
 	"github.com/negasus/jsonfq/ast"
 )
 
-func executeFn(data []byte, el filterElement, e *ast.ExprFn) (ast.Expr, error) {
+func executeFn(data []byte, el filterContext, e *ast.ExprFn) (ast.Expr, error) {
 	switch e.Name {
 	case "int":
 		return fnInt(data, el, e.Args)
@@ -16,7 +16,7 @@ func executeFn(data []byte, el filterElement, e *ast.ExprFn) (ast.Expr, error) {
 	}
 }
 
-func fnInt(data []byte, el filterElement, args []ast.Expr) (ast.Expr, error) {
+func fnInt(data []byte, el filterContext, args []ast.Expr) (ast.Expr, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("fnInt expects 1 argument, got %d", len(args))
 	}

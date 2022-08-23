@@ -7,14 +7,6 @@ import (
 	"github.com/negasus/jsonfq/ast"
 )
 
-type filterElement struct {
-	keyStart   int
-	keyEnd     int
-	valueStart int
-	valueEnd   int
-	arrayIndex int
-}
-
 func selectIndexes(data []byte, idx int, stmts []ast.Stmt) (int, int, error) {
 	var err error
 	var startIdx, endIdx int
@@ -86,7 +78,7 @@ func executeStmt(data []byte, idx int, n ast.Stmt) ([]byte, error) {
 	}
 }
 
-func executeExp(data []byte, el filterElement, e ast.Expr) (ast.Expr, error) {
+func executeExp(data []byte, el filterContext, e ast.Expr) (ast.Expr, error) {
 	switch v := e.(type) {
 	case *ast.ExprGetBlock:
 		return executeGetBlock(data, el, v)
@@ -101,7 +93,7 @@ func executeExp(data []byte, el filterElement, e ast.Expr) (ast.Expr, error) {
 	}
 }
 
-func executeGetBlock(data []byte, el filterElement, n *ast.ExprGetBlock) (ast.Expr, error) {
+func executeGetBlock(data []byte, el filterContext, n *ast.ExprGetBlock) (ast.Expr, error) {
 	var d []byte
 	switch n.T {
 	case ast.ExprGetBlockTypeValue:
@@ -120,7 +112,7 @@ func executeGetBlock(data []byte, el filterElement, n *ast.ExprGetBlock) (ast.Ex
 	return &ast.ExprValue{T: ast.ExprValueTypeBytes, D: d[start:end]}, nil
 }
 
-func executeBinaryOp(data []byte, el filterElement, n *ast.ExprBinaryOp) (ast.Expr, error) {
+func executeBinaryOp(data []byte, el filterContext, n *ast.ExprBinaryOp) (ast.Expr, error) {
 	var l, r ast.Expr
 	var err error
 	l, err = executeExp(data, el, n.Left)

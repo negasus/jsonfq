@@ -6,6 +6,14 @@ import (
 	"github.com/negasus/jsonfq/ast"
 )
 
+type filterContext struct {
+	keyStart   int
+	keyEnd     int
+	valueStart int
+	valueEnd   int
+	arrayIndex int
+}
+
 func filter(data []byte, e ast.Expr) ([]byte, error) {
 	if len(data) == 0 {
 		return nil, ErrUnexpectedEndOfData
@@ -23,14 +31,14 @@ func filter(data []byte, e ast.Expr) ([]byte, error) {
 	var arrayIndex int
 	var ok bool
 
-	var resultElements []filterElement
+	var resultElements []filterContext
 
 	for {
 		if idx >= len(data) {
 			return nil, ErrUnexpectedEndOfData
 		}
 
-		el := filterElement{-1, -1, -1, -1, -1}
+		el := filterContext{-1, -1, -1, -1, -1}
 
 		idx, err = skipSpaces(data, idx)
 		if err != nil {
@@ -83,28 +91,32 @@ func filter(data []byte, e ast.Expr) ([]byte, error) {
 		return nil, errUnexpectedSymbol(data[idx], ", or "+string(endSym))
 	}
 
-	res := make([]byte, 0, len(data))
-	res = append(res, startSym)
+	var ii int
+
+	data[0] = startSym
+	ii++
 
 	first := true
 	for _, el := range resultElements {
 		if !first {
-			res = append(res, ',')
+			data[ii] = ','
+			ii++
 		}
 		if startSym == '{' {
-			res = append(res, data[el.keyStart:el.keyEnd+1]...)
-			res = append(res, ':')
+			copy(data[ii:], data[el.keyStart:el.keyEnd+1])
+			ii += el.keyEnd - el.keyStart + 1
+			data[ii] = ':'
+			ii++
 		}
-		res = append(res, data[el.valueStart:el.valueEnd+1]...)
-
+		copy(data[ii:], data[el.valueStart:el.valueEnd+1])
+		ii += el.valueEnd - el.valueStart + 1
 		first = false
 	}
-	res = append(res, endSym)
-
-	return res, nil
+	data[ii] = endSym
+	return data[:ii+1], nil
 }
 
-func matchElement(data []byte, el filterElement, e ast.Expr) (bool, error) {
+func matchElement(data []byte, el filterContext, e ast.Expr) (bool, error) {
 	res, err := executeExp(data, el, e)
 	if err != nil {
 		return false, fmt.Errorf("error execute expression, %w", err)
